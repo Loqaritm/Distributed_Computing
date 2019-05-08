@@ -1,0 +1,87 @@
+warunki bezpieczenstwa i postepu
+
+MPI
+
+echo SETUP MPI >> ~/.bashrc
+
+zeby zapewnic bezpieczenstwo wysylamy zadanie dostepu do sekcji krytycznej 
+i czekamy na wszystkie odpowiedzi ze zgoda
+problem, kiedy dwa zadaja w tym samym momencie
+rozwiazanie:
+zegar lamporta
+etykieta:
+<Ti; i> - Ti = czas zegara lamporta procesu, i = numer procesu
+
+1. wysylamy zadanie etykietowane zegarem
+2. wkladamy do kolejki i sortujemy po etykietach czasowych
+3. czekamy na potwierdzenia odbioru od wszystkich innych (kolejka fifo, wiec mamy wszystkie poprzednie komunikaty tez)
+4. po wyjsciu wysylam komunikat release
+
+szacowanie zlozonosci w systemach rozproszonych to tylko szacowanie komunikacji a nie samych obliczen lokalnych
+czyli szacujemy tylko koszt komunikacyjny
+
+ALGORYTM LAMPORTA:
+jednostka czasu = j
+   | j| j| j|
+p1----0-----0-----
+p2-0-----0--------
+p3----0-----0-----
+    
+    1 jednostka wyslanie zadanie
+       2 jednostka potwierdzenie
+          3 jednostka release
+
+czyli algorytm lamporta trwa 3 jednostki czasu i wymaga przeslania 3(n-1) wiadomosci
+
+ALGORYTM RICARTA-AGRAWALA
+1. wyslanie zadania
+2. czeka na odpowiedzi ZGODA 
+3. jezeli ktos jest w sekcji krytycznej to nie wysyla odpowiedzi ZGODA poki nie wyjdzie z sekcji
+konflikt: jezeli lepszy proces chce wejsc (wyzszy priorytet), to wysylam ZGODA,
+w przeciwnym wypadku nie odpowiadam (tak jakby udajac ze jestem w sekcji krytycznej)
+   | j| j|
+p1----0-------
+p2-0-----0----
+p3----0-------
+
+algorytm trwa 2 jednostki czasu i wymaga przeslania 2(n-1) wiadomosci
+
+
+3 temat
+
+1. etap: 10 kwietnia 2019
+zaproponowac algorytm
+najlepiej model zdarzeniowy
+czysto teoretyczne
+wysylam to tamto siamto
+
+2. etap: 
+
+
+------------------------------------------------------------------------------------------
+ZADANIA Z MPI
+
+kompilacja:
+mpicc mpi_example1.c -o mpi_example1
+
+run:
+mpirun -n 4 mpi_example1
+mpirun -np 4 --host h1,h2,h3,h4 mpi_example1
+mpirun -np 4 --hostfile mpi_hosts mpi_example1     -- ale to troche nie dziala bo upycha od poczatku
+mpirun -np 4 --hostfile mpi_hosts --bynode mpi_example1
+
+
+co mozna robic w mpi?
+np wygodne jest robienie dyfuzji 
+
+mozna robic tez redukcje czyli agregacje wiadomosci. 
+np. 4 procesy wysylaja wiele rzeczy a odbiorca dostaje jedna zagregowana wiadomosc
+
+
+
+--------------------------------------------LAB5-------------------------------------------
+pierscien przekazywania info
+
+
+--------------------------------------------LAB6-------------------------------------------
+
