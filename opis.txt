@@ -30,8 +30,9 @@ Sprawdzamy czy IN_SZATNIA + IN_KOLEJKA + 1 <= POJEMNOSC SZATNI
     czekamy na WYCHODZE_Z_SZATNI_MESSAGE
     i sprawdzamy warunek (goto 4)
 
-5. sekcja lokalna
-    losowy ilosc czasu
+
+5. sekcja krytyczna
+    losowa ilosc czasu
 
 
 6. wysyłam wiadomosc 
@@ -44,7 +45,9 @@ Sprawdzamy czy IN_SZATNIA + IN_KOLEJKA + 1 <= POJEMNOSC SZATNI
     losowa ilosc czasu
 
 8. dolaczanie do kolejki
-    clock = max(clock, ostatni_w_kolejce_zegar)
+    //clock = max(clock, ostatni_w_kolejce_zegar) + 1
+
+    clock = ostatni_w_kolejce_zegar + 1
 
     wysylamy wiadomosc do wszystkich SYNC_MESSAGE(rank, clock, plec, szatnia)
     tag : WHATEVER
@@ -52,12 +55,6 @@ Sprawdzamy czy IN_SZATNIA + IN_KOLEJKA + 1 <= POJEMNOSC SZATNI
 
     zgoda APPROVE_MESSAGE(rank)
     tag : WHATEVER
-
-
-    
-
-
-
 
 
 drugi watek
