@@ -1,0 +1,75 @@
+const plec
+vec <struktur> kolejki[3]
+ilosc_w_szatni[3]
+
+
+1. Każdy proces na początku losuje szatnie
+
+2. Synchronizacja kazdy z kazdym SYNC_MESSAGE(rank, clock, plec, szatnia) TAG SYNC_MESSAGE
+ W ten sposob wszyscy maja stan szatni
+    2a. Wysylamy do wszystkich
+    // 2b. ODBIOR - wysylamy zgode APPROVE_MESSAGE(rank)
+    2b. czekamy na wszystkie wiadomosci SYNC_MESSAGE na TAGU SYNC_MESSAGE i zapisujemy je do kolejek (3 do każdej szatni)
+
+//odbieranie w main watku
+3. sortujemy kolejki po clock
+
+// main watek
+4. Sprawdzamy czy czy w kolejce przede mna jest tylko ta sama plec i w szatni jest tez ta plec. 
+Sprawdzamy czy IN_SZATNIA + IN_KOLEJKA + 1 <= POJEMNOSC SZATNI
+
+4a. JEZELI TAK:
+    WYSYLAMY KOMUNIKAT 
+    
+    WCHODZE_DO_SZATNI_MESSAGE
+    tag : WHATEVER
+    (rank, szatnia)
+
+
+4b. JEZELI NIE:
+    czekamy na WYCHODZE_Z_SZATNI_MESSAGE
+    i sprawdzamy warunek (goto 4)
+
+5. sekcja lokalna
+    losowy ilosc czasu
+
+
+6. wysyłam wiadomosc 
+
+    WYCHODZE Z SZATNI
+    tag : WHATEVER
+    (szatnia)
+
+7. sekcja lokalna
+    losowa ilosc czasu
+
+8. dolaczanie do kolejki
+    clock = max(clock, ostatni_w_kolejce_zegar)
+
+    wysylamy wiadomosc do wszystkich SYNC_MESSAGE(rank, clock, plec, szatnia)
+    tag : WHATEVER
+    czekamy na wszystkie zgody
+
+    zgoda APPROVE_MESSAGE(rank)
+    tag : WHATEVER
+
+
+    
+
+
+
+
+
+drugi watek
+odbiera wiadomosci na tagu WHATEVER
+
+
+
+
+
+
+
+
+
+
+
