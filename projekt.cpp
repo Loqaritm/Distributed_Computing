@@ -37,6 +37,7 @@ struct Person{
 
 //globals
 int rank;
+int my_clock;
 
 
 std::vector<Person> locker_room_queues[3];
@@ -94,12 +95,21 @@ void receive(){
 	int received_approves_num = 0;
 	while(true){
 		MPI_Recv(&msg, MAX_MSG_SIZE, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+		{
+			std::lock_guard<std::mutex> my_clock_lk(my_clock_mutex);
+			++my_clock;
+			std::cout<<rank<<": received message. my clock is now "<<my_clock<<std::endl;
+		}
 		switch (status.MPI_TAG){
 			case SYNC_MESSAGE_TAG:  //tutaj tylko dołączanie w trakcie trwania programu!
 				{
 					std::lock_guard<std::mutex> lk(locker_room_queues_mutex);
 					handle_sync_message_received(msg);
 					sort_locker_room_queues(); //TODO mozna poprawic bo sortujemy wszystkie, a wystarczy jedna
+				}
+				{
+					std::lock_guard<std::mutex> my_clock_lk_2(my_clock_mutex);
+					my_clock = std::max(my_clock, msg[1] + 1);
 				}
 				int approve_msg[APPROVE_MESSAGE_SIZE];
 				approve_msg[0] = 0;
@@ -124,10 +134,18 @@ void receive(){
 			
 			case GOING_OUT_OF_CHANGING_ROOM_TAG:
 				{
-					std::lock_guard<std::mutex> lk(locker_room_queues_mutex);  // TU NIZEJ MOZE BYC BLAD BO NIE WIEM CZY &msg DZIALA
-					locker_room_queues[msg[1]].erase(std::remove_if(locker_room_queues[msg[1]].begin(), locker_room_queues[msg[1]].end(), [&msg](auto a) -> bool {return a.rank == msg[0];}),
+					std::lock_guard<std::mutex> lk4(locker_room_queues_mutex);  // TU NIZEJ MOZE BYC BLAD BO NIE WIEM CZY &msg DZIALA
+					locker_room_queues[msg[1]].erase(std::remove_if(locker_room_queues[msg[1]].begin(), locker_room_queues[msg[1]].end(), [msg](auto a) -> bool {return a.rank == msg[0];}),
 					locker_room_queues[msg[1]].end());
 					ready=true;
+					std::cout<<rank<<": po odebraniu wiadomosci odejscia "<<std::endl<<rank<<": z kolejki "<<msg[1]<<" widze swiat tak:"<<std::endl;
+						for (auto i : locker_room_queues){
+							std::cout<<rank<<": ";
+							for (auto j : i){
+								std::cout<<j.rank<<"/"<<j.clock<<"/"<<j.sex<<"  ";
+							}
+							std::cout<<std::endl;
+						}
         		}
 				std::cout<<rank<<": received GOING_OUT_OF_CHANGING_ROOM in receive() from "<<status.MPI_SOURCE<<std::endl;
 				cv.notify_one();
@@ -221,6 +239,7 @@ void init(int &locker_room_number, int &sex, int &my_clock){
 	srand(time(NULL) + rank);
 	locker_room_number = update_number();
 	sex = generate_sex();
+	std::cout<<rank<<": MY SEX IS "<<sex<<std::endl;
 	my_clock = rand() % NUM_PROCESSES; 
 }
 
@@ -240,7 +259,7 @@ int main(int argc, char **argv)
 	MPI_Status status;
 
 	int my_locker_room_number;
-	int my_clock;
+	// int my_clock;
 	int my_sex;
 
 	MPI_Init(&argc, &argv);
@@ -283,6 +302,15 @@ int main(int argc, char **argv)
 	// }
 
 	while(true){
+
+		std::cout<<rank<<": przed step 4 "<<std::endl<<rank<<": moj locker_num = "<<my_locker_room_number<<" widze swiat tak:"<<std::endl;
+		for (auto i : locker_room_queues){
+			std::cout<<rank<<": ";
+			for (auto j : i){
+				std::cout<<j.rank<<"/"<<j.clock<<"/"<<j.sex<<"  ";
+			}
+			std::cout<<std::endl;
+		}
 		
 		std::cout<<rank<<": step 4 sprawdzanie czy mozemy"<<std::endl;
 		// 4 sprawdzanie warunku czy ktos przed nami   WAŻNE trzeba dodać mutexy porządnie. Bo inaczej ni kija nie zadziała.
@@ -300,6 +328,16 @@ int main(int argc, char **argv)
 		locker_room_queues[my_locker_room_number].erase(std::remove_if(locker_room_queues[my_locker_room_number].begin(), locker_room_queues[my_locker_room_number].end(), [rank](auto a) -> bool {return a.rank == rank;}), 
 		locker_room_queues[my_locker_room_number].end());
 
+		std::cout<<rank<<": przed step 5 "<<std::endl<<rank<<": moj locker_num = "<<my_locker_room_number<<" widze swiat tak:"<<std::endl;
+		for (auto i : locker_room_queues){
+			std::cout<<rank<<": ";
+			for (auto j : i){
+				std::cout<<j.rank<<"/"<<j.clock<<"/"<<j.sex<<"  ";
+			}
+			std::cout<<std::endl;
+		}
+
+
 		std::cout<<rank<<": step 5 sekcja krytyczna"<<std::endl;
 		// 5 sekcja krytyczna
 		std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 1000));
@@ -314,6 +352,8 @@ int main(int argc, char **argv)
 		// 7 sekcja lokalna
 		std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 1000));
 		
+
+		my_locker_room_number = update_number();
 		std::cout<<rank<<": step 8 dolaczanie do kolejki"<<std::endl;		
 		// 8 dolaczanie do kolejki
 		{
@@ -323,16 +363,18 @@ int main(int argc, char **argv)
 				if(locker_room_queues[my_locker_room_number].size() != 0){
 					my_clock = std::max(my_clock, locker_room_queues[my_locker_room_number].back().clock + 1);
 				}
+				Person p = {.rank = rank, .clock = my_clock, .sex = my_sex};
 				sync_message[1] = my_clock;
 			}
+			sync_message[3] = my_locker_room_number;
 			locker_room_queues[my_locker_room_number].push_back(p);
+			sort_locker_room_queues();
 			send_to_all(sync_message,SYNC_MESSAGE_SIZE,SYNC_MESSAGE_TAG);
 		}
 		// czekanie na odpowiedzi
 		std::cout<<rank<<": step 8b czekanie na odpowiedzi"<<std::endl;
 		wait_for_approves();
 
-		my_locker_room_number = update_number();
 	}
 
 	printf("przed joinem\n");
