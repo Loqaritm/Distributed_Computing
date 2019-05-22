@@ -23,4 +23,11 @@ int main(){
     int my_clock = 3;
     my_clock = std::max(my_clock, person_vector[0].back().a);
     std::cout<<my_clock<<std::endl;
+
+
+    std::vector<int> fuck_me[2];
+    for (int i : fuck_me[0]){
+        std::cout<<"fuck me"<<std::endl;
+    }
+    std::cout<<fuck_me[0].size()<<std::endl;
 }
