@@ -19,7 +19,7 @@ ilosc_w_szatni[3]
 Sprawdzamy czy IN_SZATNIA + IN_KOLEJKA + 1 <= POJEMNOSC SZATNI
 
 4a. JEZELI TAK:
-    WYSYLAMY KOMUNIKAT 
+    WYSYLAMY KOMUNIKAT              // !!! Niewymagane, nie implementujemy 
     
     WCHODZE_DO_SZATNI_MESSAGE
     tag : WHATEVER
@@ -38,8 +38,8 @@ Sprawdzamy czy IN_SZATNIA + IN_KOLEJKA + 1 <= POJEMNOSC SZATNI
 6. wysyłam wiadomosc 
 
     WYCHODZE Z SZATNI
-    tag : WHATEVER
-    (szatnia)
+    tag : GOING_OUT_OF_CHANGING_ROOM_TAG
+    (rank, szatnia)
 
 7. sekcja lokalna
     losowa ilosc czasu
@@ -53,7 +53,7 @@ Sprawdzamy czy IN_SZATNIA + IN_KOLEJKA + 1 <= POJEMNOSC SZATNI
     tag : WHATEVER
     czekamy na wszystkie zgody
 
-    zgoda APPROVE_MESSAGE(rank)
+    zgoda APPROVE_MESSAGE()    PUSTE
     tag : WHATEVER
 
 

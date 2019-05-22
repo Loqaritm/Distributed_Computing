@@ -5,6 +5,7 @@
 #include <vector>
 
 std::mutex can_i_go_mutex;
+std::mutex modify_mutex;
 std::condition_variable cv;
 bool ready = false;
 std::vector<int> queues[3];
@@ -13,7 +14,8 @@ void threadFun1(){
 
     for(int i = 0; i < 3; ++i){
         {
-            std::lock_guard<std::mutex> lk(can_i_go_mutex);
+            // std::lock_guard<std::mutex> lk(can_i_go_mutex);
+            std::lock_guard<std::mutex> lk(modify_mutex);
             ready = true;
             std::cout<<"threadFun1 working"<<std::endl;
             queues[0].push_back(i);
@@ -33,8 +35,11 @@ int main(){
         cv.wait(lk, []{return ready;});
         ready = false;
         std::cout<<"odebrałem"<<std::endl;
-        for (auto i : queues[0]){
-            std::cout<<"wartosc queue "<<i<<std::endl;
+        {
+            std::lock_guard<std::mutex> lk2(modify_mutex);
+            for (auto i : queues[0]){
+                std::cout<<"wartosc queue "<<i<<std::endl;
+            }
         }
         lk.unlock();
     }
