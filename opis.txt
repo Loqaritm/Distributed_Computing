@@ -1,11 +1,11 @@
-const plec
+const sex
 vec <struktur> kolejki[3]
 ilosc_w_szatni[3]
 
 
 1. Każdy proces na początku losuje szatnie
 
-2. Synchronizacja kazdy z kazdym SYNC_MESSAGE(rank, clock, plec, szatnia) TAG SYNC_MESSAGE
+2. Synchronizacja kazdy z kazdym SYNC_MESSAGE(rank, clock, sex, szatnia) TAG SYNC_MESSAGE
  W ten sposob wszyscy maja stan szatni
     2a. Wysylamy do wszystkich
     // 2b. ODBIOR - wysylamy zgode APPROVE_MESSAGE(rank)
@@ -49,7 +49,7 @@ Sprawdzamy czy IN_SZATNIA + IN_KOLEJKA + 1 <= POJEMNOSC SZATNI
 
     clock = ostatni_w_kolejce_zegar + 1
 
-    wysylamy wiadomosc do wszystkich SYNC_MESSAGE(rank, clock, plec, szatnia)
+    wysylamy wiadomosc do wszystkich SYNC_MESSAGE(rank, clock, sex, szatnia)
     tag : WHATEVER
     czekamy na wszystkie zgody
 
