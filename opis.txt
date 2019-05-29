@@ -62,6 +62,87 @@ odbiera wiadomosci na tagu WHATEVER
 
 
 
+PSEUDOKOD V2
+
+check_if_can_get_in(){
+    czy w kolejce przed nami jest ta sama plec?
+    IF YES{
+        czy suma wszystkich w kolejce przede mna + 1 <= MAX_NUM_IN_LOCKER_ROOM
+        IF YES{
+            RETURN TRUE
+        }
+    }
+    RETURN FALSE
+}
+
+receive(){
+    while TRUE{
+        odbierz wiadomosc
+        IF wiadomosc.tag == SYNC_MESSAGE_TAG{
+            dodaj osobe do kolejki
+            sortuj kolejke
+            my_clock = max(my_clock, wiadomosc.clock)
+        }
+        IF wiadomosc.tag == APPROVE_MESSAGE_TAG{
+            approves++
+            IF approves == NUM_PROCESSES{
+                approves = 0
+                udziel zgody czekającemy na potwierdzenia
+            }
+        }
+        IF wiadomosc.tag == GOING_OUT_OF_CHANGING_ROOM_TAG{
+            usuń proces z kolejki
+            powiadom czekającego na kolejna wiadomosc tego tagu 
+        }
+    }
+}
+
+
+main(){
+    get_my_rank
+    locker_room_number = rand() % 3
+    sex = rand() % 2
+    my_clock = rand() % NUM_PROCESSES
+
+    sync_message = {rank, my_clock, sex, locker_room_number}
+    send_to_all_processes(sync_message, SYNC_MESSAGE_TAG)
+    
+    dodaj siebie do kolejki
+
+    receive_from_all(SYNC_MESSAGE_TAG, SYNC_MESSAGE_SIZE)
+    sort_locker_room_queues()
+
+    thread t1(receive) // odbieranie w drugim watku
+
+    while TRUE {
+        while(!check_if_can_get_in()){
+            czekaj na kolejna wiadomosc GOING_OUT_OF_CHANGING_ROOM
+        }
+        
+        usuń siebie z kolejki
+        
+        // SEKCJA KRYTYCZNA
+        sleep(rand())
+        // KONIEC SEKCJI KRYTYCZNEJ
+
+        going_out_of_changing_room_message = {rank, locker_room_number}
+        send_to_all_processes(going_out_of_changing_room_message, GOING_OUT_OF_CHANGING_ROOM_TAG)
+
+        // SEKCJA LOKALNA
+        sleep(rand())
+        // KONIEC SEKCJI LOKALNEJ
+
+        locker_room_number = rand() % 3
+        my_clock = max(my_clock, clock_ostatniego_w_kolejce)
+
+        dodaj siebie do kolejki
+
+        sync_message = {rank, my_clock, sex, locker_room_number}
+        send_to_all_processes(sync_message, SYNC_MESSAGE_TAG)
+
+        czekaj na potwierdzenia
+    }
+} 
 
 
 
